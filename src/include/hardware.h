@@ -39,7 +39,7 @@
 #if defined(__GNUC__) || defined(__clang__)
 #define WT_READ_ONCE(v, val) (v) = (*(volatile __typeof__(val) *)&(val));
 #else
-#define WT_READ_ONCE(v, val) WT_ORDERED_READ(v, val)
+#define WT_READ_ONCE(v, val) _Generic((v), uint64_t : (v) = (*(volatile uint64_t *)&(val)))
 #endif
 
 /*
