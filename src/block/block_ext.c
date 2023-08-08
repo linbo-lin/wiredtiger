@@ -1154,6 +1154,14 @@ __wt_block_extlist_read(
         return (0);
 
     WT_RET(__wt_scr_alloc(session, el->size, &tmp));
+
+    /*
+     * Currently we do not read extent lists from previous objects. We use the objectid of the extent
+     * list to indicate whether it contains extents for the currently object (id 0) or a previous object
+     * (id not 0). We always read extent lists from the current object. Therefore, for reading we do not
+     * use the object id recorded inside the extent list, but zero (to read from the current object). We
+     * will need to change that, once we begin reading extent lists from other objects.
+     */
     WT_ERR(
       __wt_block_read_off(session, block, tmp, el->objectid, el->offset, el->size, el->checksum));
 
