@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) 2014-present MongoDB, Inc.
  * Copyright (c) 2008-2014 WiredTiger, Inc.
- *	All rights reserved.
+ *  All rights reserved.
  *
  * See the file LICENSE for redistribution information.
  */
@@ -223,6 +223,19 @@ __block_ckpt_unpack(WT_SESSION_IMPL *session, WT_BLOCK *block, const uint8_t *ck
       &ci->avail.size, &ci->avail.checksum));
     WT_RET(__block_addr_unpack(session, block, &ckpt, 0, &ci->discard.objectid, &ci->discard.offset,
       &ci->discard.size, &ci->discard.checksum));
+
+    /* Unpack the value indicating how many discard lists for previous objects this checkpoint has. */
+    WT_RET(__wt_vunpack_uint(&ckpt, 0, &a));
+    ci->prevobj_discard_size = a;
+
+    /* Allocate memory for the previous objects' discard lists */
+    WT_RET(__wt_calloc(session, ci->prevobj_discard_size, sizeof(WT_EXTLIST), &ci->prevobj_discard));
+
+    /* Unpack the previous objects' extent lists */
+    for (a = 0; a < ci->prevobj_discard_size; a++)
+        WT_RET(__block_addr_unpack(session, block, &ckpt, 0, &ci->prevobj_discard[a].objectid, &ci->prevobj_discard[a].offset,
+          &ci->prevobj_discard[a].size, &ci->prevobj_discard[a].checksum));
+
     WT_RET(__wt_vunpack_uint(&ckpt, 0, &a));
     ci->file_size = (wt_off_t)a;
     WT_RET(__wt_vunpack_uint(&ckpt, 0, &a));
@@ -307,6 +320,16 @@ __wt_block_ckpt_pack(
           __wt_block_addr_pack(block, pp, 0, ci->avail.offset, ci->avail.size, ci->avail.checksum));
     WT_RET(__wt_block_addr_pack(
       block, pp, 0, ci->discard.offset, ci->discard.size, ci->discard.checksum));
+
+    /* Pack the size of the list containing previous objects' discard lists. */
+    a = ci->prevobj_discard_size;
+    WT_RET(__wt_vpack_uint(pp, 0, a));
+
+    /* Pack the previous objects' discard lists. */
+    for (a = 0; a < ci->prevobj_discard_size; a++)
+         WT_RET(__wt_block_addr_pack(block, pp, ci->prevobj_discard[a].objectid,
+           ci->prevobj_discard[a].offset, ci->prevobj_discard[a].size, ci->prevobj_discard[a].checksum));
+
     a = (uint64_t)ci->file_size;
     WT_RET(__wt_vpack_uint(pp, 0, a));
     a = ci->ckpt_size;

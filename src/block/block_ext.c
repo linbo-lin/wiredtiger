@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) 2014-present MongoDB, Inc.
  * Copyright (c) 2008-2014 WiredTiger, Inc.
- *	All rights reserved.
+ *  All rights reserved.
  *
  * See the file LICENSE for redistribution information.
  */
@@ -10,7 +10,7 @@
 
 /*
  * WT_BLOCK_RET --
- *	Handle extension list errors that would normally panic the system but
+ *  Handle extension list errors that would normally panic the system but
  * which should fail gracefully when verifying.
  */
 #define WT_BLOCK_RET(session, block, v, ...)                                        \
@@ -400,7 +400,7 @@ corrupt:
  */
 int
 __wt_block_off_remove_overlap(
-  WT_SESSION_IMPL *session, WT_BLOCK *block, WT_EXTLIST *el, wt_off_t off, wt_off_t size)
+  WT_SESSION_IMPL *session, uint32_t objectid, WT_BLOCK *block, WT_EXTLIST *el, wt_off_t off, wt_off_t size)
 {
     WT_EXT *before, *after, *ext;
     wt_off_t a_off, a_size, b_off, b_size;
@@ -601,8 +601,11 @@ __wt_block_free(WT_SESSION_IMPL *session, WT_BLOCK *block, const uint8_t *addr, 
      * each object in the metadata, and when enough of the object is no longer in use, perform a
      * compaction like process to do any remaining cleanup.
      */
-    if (objectid != block->objectid)
+    if (objectid != block->objectid) {
+        __wt_verbose(session, WT_VERB_TIERED,  "wish to free tiered %" PRIu32 ": %" PRIdMAX "/%" PRIdMAX, objectid,
+      (intmax_t)offset, (intmax_t)size);
         return (0);
+    }
 
     __wt_verbose(session, WT_VERB_BLOCK, "free %" PRIu32 ": %" PRIdMAX "/%" PRIdMAX, objectid,
       (intmax_t)offset, (intmax_t)size);
@@ -640,7 +643,8 @@ __wt_block_off_free(
 
     /* We can't reuse free space in an object. */
     if (objectid != block->objectid)
-        return (0);
+        __wt_verbose(session, WT_VERB_BLOCK, "free from another object %" PRIu32 ": %" PRIdMAX "/%" PRIdMAX, objectid,
+          (intmax_t)offset, (intmax_t)size);
 
     /*
      * Callers of this function are expected to have already acquired any locks required to
@@ -651,7 +655,7 @@ __wt_block_off_free(
      * modification). If this extent is referenced in a previous checkpoint, merge into the discard
      * list.
      */
-    if ((ret = __wt_block_off_remove_overlap(session, block, &block->live.alloc, offset, size)) ==
+    if ((ret = __wt_block_off_remove_overlap(session, block, objectid, &block->live.alloc, offset, size)) ==
       0)
         ret = __block_merge(session, block, &block->live.avail, offset, size);
     else if (ret == WT_NOTFOUND)
@@ -748,39 +752,39 @@ __block_ext_overlap(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_EXTLIST *ael, 
      *
      * We can think of the overlap possibilities as 11 different cases:
      *
-     *		AAAAAAAAAAAAAAAAAA
-     * #1		BBBBBBBBBBBBBBBBBB		ranges are the same
-     * #2	BBBBBBBBBBBBB				overlaps the beginning
-     * #3			BBBBBBBBBBBBBBBB	overlaps the end
-     * #4		BBBBB				B is a prefix of A
-     * #5			BBBBBB			B is middle of A
-     * #6			BBBBBBBBBB		B is a suffix of A
+     *      AAAAAAAAAAAAAAAAAA
+     * #1       BBBBBBBBBBBBBBBBBB      ranges are the same
+     * #2   BBBBBBBBBBBBB               overlaps the beginning
+     * #3           BBBBBBBBBBBBBBBB    overlaps the end
+     * #4       BBBBB               B is a prefix of A
+     * #5           BBBBBB          B is middle of A
+     * #6           BBBBBBBBBB      B is a suffix of A
      *
      * and:
      *
-     *		BBBBBBBBBBBBBBBBBB
-     * #7	AAAAAAAAAAAAA				same as #3
-     * #8			AAAAAAAAAAAAAAAA	same as #2
-     * #9		AAAAA				A is a prefix of B
-     * #10			AAAAAA			A is middle of B
-     * #11			AAAAAAAAAA		A is a suffix of B
+     *      BBBBBBBBBBBBBBBBBB
+     * #7   AAAAAAAAAAAAA               same as #3
+     * #8           AAAAAAAAAAAAAAAA    same as #2
+     * #9       AAAAA               A is a prefix of B
+     * #10          AAAAAA          A is middle of B
+     * #11          AAAAAAAAAA      A is a suffix of B
      *
      *
      * By swapping the arguments so "A" is always the lower range, we can
      * eliminate cases #2, #8, #10 and #11, and only handle 7 cases:
      *
-     *		AAAAAAAAAAAAAAAAAA
-     * #1		BBBBBBBBBBBBBBBBBB		ranges are the same
-     * #3			BBBBBBBBBBBBBBBB	overlaps the end
-     * #4		BBBBB				B is a prefix of A
-     * #5			BBBBBB			B is middle of A
-     * #6			BBBBBBBBBB		B is a suffix of A
+     *      AAAAAAAAAAAAAAAAAA
+     * #1       BBBBBBBBBBBBBBBBBB      ranges are the same
+     * #3           BBBBBBBBBBBBBBBB    overlaps the end
+     * #4       BBBBB               B is a prefix of A
+     * #5           BBBBBB          B is middle of A
+     * #6           BBBBBBBBBB      B is a suffix of A
      *
      * and:
      *
-     *		BBBBBBBBBBBBBBBBBB
-     * #7	AAAAAAAAAAAAA				same as #3
-     * #9		AAAAA				A is a prefix of B
+     *      BBBBBBBBBBBBBBBBBB
+     * #7   AAAAAAAAAAAAA               same as #3
+     * #9       AAAAA               A is a prefix of B
      */
     a = *ap;
     b = *bp;

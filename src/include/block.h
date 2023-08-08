@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) 2014-present MongoDB, Inc.
  * Copyright (c) 2008-2014 WiredTiger, Inc.
- *	All rights reserved.
+ *  All rights reserved.
  *
  * See the file LICENSE for redistribution information.
  */
@@ -18,9 +18,9 @@
 
 /*
  * The block manager maintains three per-checkpoint extent lists:
- *	alloc:	 the extents allocated in this checkpoint
- *	avail:	 the extents available for allocation
- *	discard: the extents freed in this checkpoint
+ *  alloc:   the extents allocated in this checkpoint
+ *  avail:   the extents available for allocation
+ *  discard: the extents freed in this checkpoint
  *
  * An extent list is based on two skiplists: first, a by-offset list linking
  * WT_EXT elements and sorted by file offset (low-to-high), second, a by-size
@@ -43,7 +43,7 @@
 
 /*
  * WT_EXTLIST --
- *	An extent list.
+ *  An extent list.
  */
 struct __wt_extlist {
     char *name; /* Name */
@@ -66,7 +66,7 @@ struct __wt_extlist {
 
 /*
  * WT_EXT --
- *	Encapsulation of an extent, either allocated or freed within the
+ *  Encapsulation of an extent, either allocated or freed within the
  * checkpoint.
  */
 struct __wt_ext {
@@ -85,7 +85,7 @@ struct __wt_ext {
 
 /*
  * WT_SIZE --
- *	Encapsulation of a block size skiplist entry.
+ *  Encapsulation of a block size skiplist entry.
  */
 struct __wt_size {
     wt_off_t size; /* Size */
@@ -104,9 +104,9 @@ struct __wt_size {
 
 /*
  * WT_EXT_FOREACH --
- *	Walk a block manager skiplist.
+ *  Walk a block manager skiplist.
  * WT_EXT_FOREACH_OFF --
- *	Walk a block manager skiplist where the WT_EXT.next entries are offset
+ *  Walk a block manager skiplist where the WT_EXT.next entries are offset
  * by the depth.
  */
 #define WT_EXT_FOREACH(skip, head) \
@@ -116,7 +116,7 @@ struct __wt_size {
 
 /*
  * WT_EXT_FOREACH_FROM_OFFSET_INCL --
- *	Walk a by-offset skiplist from the given offset, starting with the extent that contains the
+ *  Walk a by-offset skiplist from the given offset, starting with the extent that contains the
  * given offset if available.
  */
 #define WT_EXT_FOREACH_FROM_OFFSET_INCL(skip, el, start)                        \
@@ -128,8 +128,8 @@ struct __wt_size {
  * file version should the default block manager checkpoint format change.
  *
  * Version #1 checkpoint cookie format:
- *	[1] [root addr] [alloc addr] [avail addr] [discard addr]
- *	    [file size] [checkpoint size] [write generation]
+ *  [1] [root addr] [alloc addr] [avail addr] [discard addr]
+ *      [file size] [checkpoint size] [write generation]
  */
 #define WT_BM_CHECKPOINT_VERSION 1   /* Checkpoint format version */
 #define WT_BLOCK_EXTLIST_MAGIC 71002 /* Identify a list */
@@ -158,6 +158,9 @@ struct __wt_block_ckpt {
     WT_EXTLIST avail;   /* Extents available */
     WT_EXTLIST discard; /* Extents discarded */
 
+    uint32_t prevobj_discard_size; /* Number of previous objects' discard lists */
+    WT_EXTLIST *prevobj_discard;   /* List of previous objects' discard lists */
+
     wt_off_t file_size; /* Checkpoint file size */
     uint64_t ckpt_size; /* Checkpoint byte count */
 
@@ -174,7 +177,7 @@ struct __wt_block_ckpt {
 
 /*
  * WT_BM --
- *	Block manager handle, references a single checkpoint in a btree.
+ *  Block manager handle, references a single checkpoint in a btree.
  */
 struct __wt_bm {
     /* Methods */
@@ -240,7 +243,7 @@ struct __wt_bm {
 
 /*
  * WT_BLOCK --
- *	Block manager handle, references a single file.
+ *  Block manager handle, references a single file.
  */
 struct __wt_block {
     const char *name;  /* Name */
@@ -313,7 +316,7 @@ struct __wt_block {
 
 /*
  * WT_BLOCK_DESC --
- *	The file's description.
+ *  The file's description.
  */
 struct __wt_block_desc {
 #define WT_BLOCK_MAGIC 120897
@@ -353,7 +356,7 @@ __wt_block_desc_byteswap(WT_BLOCK_DESC *desc)
 
 /*
  * WT_BLOCK_HEADER --
- *	Blocks have a common header, a WT_PAGE_HEADER structure followed by a
+ *  Blocks have a common header, a WT_PAGE_HEADER structure followed by a
  * block-manager specific structure: WT_BLOCK_HEADER is WiredTiger's default.
  */
 struct __wt_block_header {
@@ -424,7 +427,7 @@ __wt_block_header_byteswap(WT_BLOCK_HEADER *blk)
 /*
  * WT_BLOCK_HEADER_BYTE
  * WT_BLOCK_HEADER_BYTE_SIZE --
- *	The first usable data byte on the block (past the combined headers).
+ *  The first usable data byte on the block (past the combined headers).
  */
 #define WT_BLOCK_HEADER_BYTE_SIZE (WT_PAGE_HEADER_SIZE + WT_BLOCK_HEADER_SIZE)
 #define WT_BLOCK_HEADER_BYTE(dsk) ((void *)((uint8_t *)(dsk) + WT_BLOCK_HEADER_BYTE_SIZE))
