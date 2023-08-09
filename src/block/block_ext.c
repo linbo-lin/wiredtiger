@@ -29,6 +29,57 @@ static int __block_extlist_dump(WT_SESSION_IMPL *, WT_BLOCK *, WT_EXTLIST *, con
 static int __block_merge(WT_SESSION_IMPL *, WT_BLOCK *, WT_EXTLIST *, wt_off_t, wt_off_t);
 
 /*
+ * __block_off_free_tiered --
+ *     Free the block from a previous object. Merge it into the discard list for that object.
+ */
+int
+__block_off_free_tiered(
+  WT_SESSION_IMPL *session, WT_BLOCK *block, uint32_t objectid, wt_off_t offset, wt_off_t size)
+{
+    WT_BLOCK_CKPT *ci;
+    WT_DECL_RET;
+    WT_EXTLIST *el, *new_lists, old_lists;
+    char list_name[15];
+    int i, new_size;
+
+    ci = &block->live;
+    el = NULL;
+
+    __wt_spin_lock(session, &block->live_lock);
+
+    /*
+     * Iterate over the previous objects' discard lists. If we don't find the list for our
+     * object, allocate one. Merge the block into that list.
+     */
+    for (i = 0; i < ci->prevobj_discard_size; i++)
+        if (ci->prevobj_discard[i].objectid == objectid)
+            el = &ci->prevobj_discard[i];
+
+    /*
+     * We did not find the discard list for this object. Re-allocate the array of
+     * discard lists to make room for this object.
+     */
+    if (el == NULL) {
+        new_size = ci->prevobj_discard_size + 1;
+        WT_RET(__wt_calloc(session, new_size, sizeof(WT_EXTLIST), &new_lists));
+        for (i = 0; i < ci->prevobj_discard_size; i++)
+            new_lists[i] = ci->prevobj_discard[i];
+
+        snprintf((char*)list_name, 15, "object %d", objectid);
+        WT_RET(__wt_block_extlist_init(session, &new_lists[i+1],
+          (const char*) list_name, "discard", false));
+        new_lists[i+1].objectid = objectid;
+        old_lists = ci->prevobj_discard;
+        ci->prevobj_discard = new_lists;
+        __wt_free(session, old_lists);
+        el = &ci->prevobj_discard[i+1];
+    }
+
+    WT_RET(__block_merge(session, block, el, offset, (wt_off_t)size));
+    return (0);
+}
+
+/*
  * __block_off_srch_last --
  *     Return the last element in the list, along with a stack for appending.
  */
@@ -592,21 +643,6 @@ __wt_block_free(WT_SESSION_IMPL *session, WT_BLOCK *block, const uint8_t *addr, 
     WT_RET(__wt_block_addr_unpack(
       session, block, addr, addr_size, &objectid, &offset, &size, &checksum));
 
-    /*
-     * Freeing blocks in a previous object isn't possible in the current architecture. We'd like to
-     * know when a previous object is either completely rewritten (or more likely, empty enough that
-     * rewriting remaining blocks is worth doing). Just knowing which blocks are no longer in use
-     * isn't enough to remove them (because the internal pages have to be rewritten and we don't
-     * know where they are); the simplest solution is probably to keep a count of freed bytes from
-     * each object in the metadata, and when enough of the object is no longer in use, perform a
-     * compaction like process to do any remaining cleanup.
-     */
-    if (objectid != block->objectid) {
-        __wt_verbose(session, WT_VERB_TIERED,  "wish to free tiered %" PRIu32 ": %" PRIdMAX "/%" PRIdMAX, objectid,
-      (intmax_t)offset, (intmax_t)size);
-        return (0);
-    }
-
     __wt_verbose(session, WT_VERB_BLOCK, "free %" PRIu32 ": %" PRIdMAX "/%" PRIdMAX, objectid,
       (intmax_t)offset, (intmax_t)size);
 
@@ -642,9 +678,12 @@ __wt_block_off_free(
     WT_ASSERT(session, WT_SESSION_BTREE_SYNC_SAFE(session, S2BT(session)));
 
     /* We can't reuse free space in an object. */
-    if (objectid != block->objectid)
+    if (objectid != block->objectid) {
         __wt_verbose(session, WT_VERB_BLOCK, "free from another object %" PRIu32 ": %" PRIdMAX "/%" PRIdMAX, objectid,
           (intmax_t)offset, (intmax_t)size);
+        ret = __block_off_free_tiered(session, block, objectid, offset, size);
+        return ret;
+    }
 
     /*
      * Callers of this function are expected to have already acquired any locks required to
