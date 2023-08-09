@@ -218,6 +218,7 @@ __wt_block_checkpoint_unload(WT_SESSION_IMPL *session, WT_BLOCK *block, bool che
 void
 __wt_block_ckpt_destroy(WT_SESSION_IMPL *session, WT_BLOCK_CKPT *ci)
 {
+    int i;
     /*
      * We should hold the live lock here when running on the live checkpoint. But there is no easy
      * way to determine if the checkpoint is live so we cannot assert the locking here.
@@ -227,9 +228,14 @@ __wt_block_ckpt_destroy(WT_SESSION_IMPL *session, WT_BLOCK_CKPT *ci)
     __wt_block_extlist_free(session, &ci->alloc);
     __wt_block_extlist_free(session, &ci->avail);
     __wt_block_extlist_free(session, &ci->discard);
+    for (i = 0; i < ci->prevobj_discard_size; i++)
+        __wt_block_extlist_free(session, &ci->prevobj_discard[i]);
+
     __wt_block_extlist_free(session, &ci->ckpt_alloc);
     __wt_block_extlist_free(session, &ci->ckpt_avail);
     __wt_block_extlist_free(session, &ci->ckpt_discard);
+    for (i = 0; i < ci->ckpt_prevobj_discard_size; i++)
+        __wt_block_extlist_free(session, &ci->ckpt_prevobj_discard[i]);
 }
 
 /*
@@ -538,6 +544,7 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
     WT_DECL_RET;
     uint64_t ckpt_size;
     bool deleting, fatal, local;
+    int i;
 
     ci = &block->live;
     fatal = false;
@@ -602,6 +609,8 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
     WT_RET(__wt_block_extlist_init(session, &ci->ckpt_avail, "live", "ckpt_avail", true));
     __wt_block_extlist_free(session, &ci->ckpt_alloc);
     __wt_block_extlist_free(session, &ci->ckpt_discard);
+    for (i = 0; i < ci->ckpt_prevobj_discard_size; i++)
+        __wt_block_extlist_free(session, &ci->ckpt_prevobj_discard[i]);
 
     /*
      * To delete a checkpoint, we need checkpoint information for it and the subsequent checkpoint
@@ -817,6 +826,11 @@ live_update:
     ci->ckpt_discard = ci->discard;
     WT_ERR(__wt_block_extlist_init(session, &ci->discard, "live", "discard", false));
 
+    ci->ckpt_prevobj_discard_size = ci->prevobj_discard_size;
+    ci->ckpt_prevobj_discard = ci->prevobj_discard;
+    ci->prevobj_discard_size = 0;
+    ci->prevobj_discard = NULL;
+
 #ifdef HAVE_DIAGNOSTIC
     /*
      * The first checkpoint in the system should always have an empty discard list. If we've read
@@ -975,6 +989,7 @@ __wt_block_checkpoint_resolve(WT_SESSION_IMPL *session, WT_BLOCK *block, bool fa
 {
     WT_BLOCK_CKPT *ci;
     WT_DECL_RET;
+    int i;
 
     ci = &block->live;
 
@@ -1016,6 +1031,8 @@ __wt_block_checkpoint_resolve(WT_SESSION_IMPL *session, WT_BLOCK *block, bool fa
     __wt_block_extlist_free(session, &ci->ckpt_avail);
     __wt_block_extlist_free(session, &ci->ckpt_alloc);
     __wt_block_extlist_free(session, &ci->ckpt_discard);
+    for (i = 0; i < ci->ckpt_prevobj_discard_size; i++)
+        __wt_block_extlist_free(session, &ci->ckpt_prevobj_discard[i]);
 
     __wt_spin_lock(session, &block->live_lock);
 done:

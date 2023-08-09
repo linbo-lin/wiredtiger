@@ -173,6 +173,8 @@ struct __wt_block_ckpt {
      */
     WT_EXTLIST ckpt_alloc;   /* Checkpoint archive */
     WT_EXTLIST ckpt_discard; /* Checkpoint archive */
+    uint32_t ckpt_prevobj_discard_size; /* Checkpoint archive */
+    WT_EXTLIST *ckpt_prevobj_discard;   /* Checkpoint archive */
 };
 
 /*
