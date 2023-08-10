@@ -354,8 +354,9 @@ __ckpt_extlist_read(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckpt, bo
     WT_RET(__wt_block_extlist_read(session, block, &ci->alloc, ci->file_size));
     WT_RET(__wt_block_extlist_read(session, block, &ci->discard, ci->file_size));
 
-    
-
+    /* Read previous discard lists for previous objects. */
+    for (i = 0; i < ci->prevobj_discard_size; i++)
+        WT_RET(__wt_block_extlist_read(session, block, &ci->prevobj_discard[i], ci->file_size));
     return (0);
 }
 
