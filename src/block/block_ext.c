@@ -29,6 +29,51 @@ static int __block_extlist_dump(WT_SESSION_IMPL *, WT_BLOCK *, WT_EXTLIST *, con
 static int __block_merge(WT_SESSION_IMPL *, WT_BLOCK *, WT_EXTLIST *, wt_off_t, wt_off_t);
 
 /*
+ * __block_find_prevdiscard --
+ *   Find the previous object discard list for the given object id in the given checkpoint. If the list is
+ *   not there, grow the array of lists to make room for the new list. Allocate and initialize the new list.
+ */
+int
+__block_find_prevdiscard(WT_SESSION_IMPL *session, WT_BLOCK_CKPT *ci, uint32_t objectid, WT_EXTLIST **el_retp)
+{
+    WT_DECL_RET;
+    WT_EXTLIST *el, *new_lists, old_lists;
+    int i, new_size;
+
+    *el_retp = NULL;
+
+    /* Iterate over the previous objects' discard lists. If we find the one for our object, return it. */
+    for (i = 0; i < ci->prevobj_discard_size; i++)
+        if (ci->prevobj_discard[i].objectid == objectid) {
+            el = &ci->prevobj_discard[i];
+            *el_retp = el;
+            return (0);
+        }
+
+    /*
+     * We did not find the discard list for this object. Re-allocate the array of
+     * discard lists to make room for this object's list.
+     */
+    new_size = ci->prevobj_discard_size + 1;
+    WT_RET(__wt_calloc(session, new_size, sizeof(WT_EXTLIST), &new_lists));
+    for (i = 0; i < ci->prevobj_discard_size; i++)
+        new_lists[i] = ci->prevobj_discard[i];
+
+    snprintf((char*)list_name, 15, "object %d", objectid);
+    WT_RET(__wt_block_extlist_init(session, &new_lists[i+1], (const char*) list_name, "discard", false));
+    new_lists[i+1].objectid = objectid;
+    old_lists = ci->prevobj_discard;
+    __wt_free(session, old_lists);
+
+    ci->prevobj_discard = new_lists;
+    ci->prevobj_discard_size = new_size;
+
+    el = &ci->prevobj_discard[i+1];
+    *el_retp = el;
+    return (0);
+}
+
+/*
  * __block_off_free_tiered --
  *     Free the block from a previous object. Merge it into the discard list for that object.
  */
@@ -46,36 +91,9 @@ __block_off_free_tiered(
     el = NULL;
 
     __wt_spin_lock(session, &block->live_lock);
-
-    /*
-     * Iterate over the previous objects' discard lists. If we don't find the list for our
-     * object, allocate one. Merge the block into that list.
-     */
-    for (i = 0; i < ci->prevobj_discard_size; i++)
-        if (ci->prevobj_discard[i].objectid == objectid)
-            el = &ci->prevobj_discard[i];
-
-    /*
-     * We did not find the discard list for this object. Re-allocate the array of
-     * discard lists to make room for this object.
-     */
-    if (el == NULL) {
-        new_size = ci->prevobj_discard_size + 1;
-        WT_RET(__wt_calloc(session, new_size, sizeof(WT_EXTLIST), &new_lists));
-        for (i = 0; i < ci->prevobj_discard_size; i++)
-            new_lists[i] = ci->prevobj_discard[i];
-
-        snprintf((char*)list_name, 15, "object %d", objectid);
-        WT_RET(__wt_block_extlist_init(session, &new_lists[i+1],
-          (const char*) list_name, "discard", false));
-        new_lists[i+1].objectid = objectid;
-        old_lists = ci->prevobj_discard;
-        ci->prevobj_discard = new_lists;
-        __wt_free(session, old_lists);
-        el = &ci->prevobj_discard[i+1];
-    }
-
+    WT_RET(__block_find_prevdiscard(session, ci, objectid, &el));
     WT_RET(__block_merge(session, block, el, offset, (wt_off_t)size));
+    __wt_spin_unlock(session, &block->live_lock); /* XXX -- check locking */
     return (0);
 }
 

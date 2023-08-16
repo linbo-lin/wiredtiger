@@ -543,6 +543,7 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
     WT_BLOCK_CKPT *a, *b, *ci;
     WT_CKPT *ckpt, *next_ckpt;
     WT_DECL_RET;
+    WT_EXTLIST *dest_prevobj_el;
     uint64_t ckpt_size;
     bool deleting, fatal, local;
     int i;
@@ -594,17 +595,13 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
     WT_RET(ret);
 
     /*
-     * Extents newly available as a result of deleting previous checkpoints are added to a list of
-     * extents. The list should be empty, but as described above, there is no "free the checkpoint
-     * information" call into the block manager; if there was an error in an upper level that
-     * resulted in some previous checkpoint never being resolved, the list may not be empty. We
-     * should have caught that with the "checkpoint in progress" test, but it doesn't cost us
-     * anything to be cautious.
+     * Potentially free the checkpoint's old archive of allocation and discard extent lists.
+     * These lists should be empty, as the archive is freed as part of the resolution step,
+     * but if there was an error in an upper level that resulted in some previous checkpoint
+     * never being resolved, the list may not be empty. We should have caught that with the
+     * "checkpoint in progress" test, but it doesn't cost us anything to be cautious.
      *
-     * We free the checkpoint's allocation and discard extent lists as part of the resolution step,
-     * not because they're needed at that time, but because it's potentially a lot of work, and
-     * waiting allows the btree layer to continue eviction sooner. As for the checkpoint-available
-     * list, make sure they get cleaned out.
+     * As for the checkpoint-available list, make sure they get cleaned out.
      */
     __wt_block_extlist_free(session, &ci->ckpt_avail);
     WT_RET(__wt_block_extlist_init(session, &ci->ckpt_avail, "live", "ckpt_avail", true));
@@ -734,6 +731,8 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
         WT_ERR(__ckpt_extlist_fblocks(session, block, &a->alloc));
         WT_ERR(__ckpt_extlist_fblocks(session, block, &a->avail));
         WT_ERR(__ckpt_extlist_fblocks(session, block, &a->discard));
+        for (i = 0; i < a->prevobj_discard_size; i++)
+            WT_ERR(__ckpt_extlist_fblocks(session, block, &a->prevobj_discard[i]));
 
         /*
          * Roll the "from" alloc and discard extent lists into the "to" checkpoint's lists.
@@ -742,6 +741,15 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
             WT_ERR(__wt_block_extlist_merge(session, block, &a->alloc, &b->alloc));
         if (a->discard.entries != 0)
             WT_ERR(__wt_block_extlist_merge(session, block, &a->discard, &b->discard));
+
+
+        for (i = 0; i < a->prevobj_discard_size; i++)
+            if (a->prevobj_discard[i].entries != 0) {
+                /* Locate the discard list for this object in the destination checkpoint. */
+                WT_ERR(__block_find_prevdiscard(session, b, a->prevobj_discard[i].objectid, &dest_prevobj_el));
+                WT_ERR(__wt_block_extlist_merge(session, block, &a->prevobj_discard[i], dest_prevobj_el));
+            }
+        /* TODO: Continue */
 
         /*
          * If the "to" checkpoint is also being deleted, we're done with it, it's merged into some
