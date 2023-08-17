@@ -218,7 +218,7 @@ __wt_block_checkpoint_unload(WT_SESSION_IMPL *session, WT_BLOCK *block, bool che
 void
 __wt_block_ckpt_destroy(WT_SESSION_IMPL *session, WT_BLOCK_CKPT *ci)
 {
-    int i;
+    uint i;
     /*
      * We should hold the live lock here when running on the live checkpoint. But there is no easy
      * way to determine if the checkpoint is live so we cannot assert the locking here.
@@ -325,7 +325,7 @@ static int
 __ckpt_extlist_read(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckpt, bool *localp)
 {
     WT_BLOCK_CKPT *ci;
-    int i;
+    uint i;
 
     /* Default to a local file. */
     *localp = true;
@@ -544,9 +544,9 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
     WT_CKPT *ckpt, *next_ckpt;
     WT_DECL_RET;
     WT_EXTLIST *dest_prevobj_el;
-    uint64_t ckpt_size;
     bool deleting, fatal, local;
-    int i;
+    uint i;
+    uint64_t ckpt_size;
 
     ci = &block->live;
     fatal = false;
@@ -746,7 +746,7 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
         for (i = 0; i < a->prevobj_discard_size; i++)
             if (a->prevobj_discard[i].entries != 0) {
                 /* Locate the discard list for this object in the destination checkpoint. */
-                WT_ERR(__block_find_prevdiscard(session, b, a->prevobj_discard[i].objectid, &dest_prevobj_el));
+                WT_ERR(__wt_block_find_prevdiscard(session, b, a->prevobj_discard[i].objectid, &dest_prevobj_el));
                 WT_ERR(__wt_block_extlist_merge(session, block, &a->prevobj_discard[i], dest_prevobj_el));
             }
 
@@ -999,7 +999,7 @@ __wt_block_checkpoint_resolve(WT_SESSION_IMPL *session, WT_BLOCK *block, bool fa
 {
     WT_BLOCK_CKPT *ci;
     WT_DECL_RET;
-    int i;
+    uint i;
 
     ci = &block->live;
 

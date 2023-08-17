@@ -34,11 +34,12 @@ static int __block_merge(WT_SESSION_IMPL *, WT_BLOCK *, WT_EXTLIST *, wt_off_t, 
  *   not there, grow the array of lists to make room for the new list. Allocate and initialize the new list.
  */
 int
-__block_find_prevdiscard(WT_SESSION_IMPL *session, WT_BLOCK_CKPT *ci, uint32_t objectid, WT_EXTLIST **el_retp)
+__wt_block_find_prevdiscard(
+  WT_SESSION_IMPL *session, WT_BLOCK_CKPT *ci, uint32_t objectid, WT_EXTLIST **el_retp)
 {
-    WT_DECL_RET;
-    WT_EXTLIST *el, *new_lists, old_lists;
-    int i, new_size;
+    WT_EXTLIST *el, *new_lists, *old_lists;
+    char list_name[15];
+    uint i, new_size;
 
     *el_retp = NULL;
 
@@ -77,21 +78,18 @@ __block_find_prevdiscard(WT_SESSION_IMPL *session, WT_BLOCK_CKPT *ci, uint32_t o
  * __block_off_free_tiered --
  *     Free the block from a previous object. Merge it into the discard list for that object.
  */
-int
+static int
 __block_off_free_tiered(
   WT_SESSION_IMPL *session, WT_BLOCK *block, uint32_t objectid, wt_off_t offset, wt_off_t size)
 {
     WT_BLOCK_CKPT *ci;
-    WT_DECL_RET;
-    WT_EXTLIST *el, *new_lists, old_lists;
-    char list_name[15];
-    int i, new_size;
+    WT_EXTLIST *el;
 
     ci = &block->live;
     el = NULL;
 
     __wt_spin_lock(session, &block->live_lock);
-    WT_RET(__block_find_prevdiscard(session, ci, objectid, &el));
+    WT_RET(__wt_block_find_prevdiscard(session, ci, objectid, &el));
     WT_RET(__block_merge(session, block, el, offset, (wt_off_t)size));
     __wt_spin_unlock(session, &block->live_lock); /* XXX -- check locking */
     return (0);
@@ -469,7 +467,7 @@ corrupt:
  */
 int
 __wt_block_off_remove_overlap(
-  WT_SESSION_IMPL *session, uint32_t objectid, WT_BLOCK *block, WT_EXTLIST *el, wt_off_t off, wt_off_t size)
+  WT_SESSION_IMPL *session, WT_BLOCK *block, WT_EXTLIST *el, wt_off_t off, wt_off_t size)
 {
     WT_EXT *before, *after, *ext;
     wt_off_t a_off, a_size, b_off, b_size;
@@ -712,7 +710,7 @@ __wt_block_off_free(
      * modification). If this extent is referenced in a previous checkpoint, merge into the discard
      * list.
      */
-    if ((ret = __wt_block_off_remove_overlap(session, block, objectid, &block->live.alloc, offset, size)) ==
+    if ((ret = __wt_block_off_remove_overlap(session, block, &block->live.alloc, offset, size)) ==
       0)
         ret = __block_merge(session, block, &block->live.avail, offset, size);
     else if (ret == WT_NOTFOUND)

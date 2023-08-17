@@ -226,7 +226,7 @@ __block_ckpt_unpack(WT_SESSION_IMPL *session, WT_BLOCK *block, const uint8_t *ck
 
     /* Unpack the value indicating how many discard lists for previous objects this checkpoint has. */
     WT_RET(__wt_vunpack_uint(&ckpt, 0, &a));
-    ci->prevobj_discard_size = a;
+    ci->prevobj_discard_size = (uint32_t)a;
 
     /* Allocate memory for the previous objects' discard lists */
     WT_RET(__wt_calloc(session, ci->prevobj_discard_size, sizeof(WT_EXTLIST), &ci->prevobj_discard));
