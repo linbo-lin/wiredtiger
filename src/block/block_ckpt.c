@@ -749,7 +749,6 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
                 WT_ERR(__block_find_prevdiscard(session, b, a->prevobj_discard[i].objectid, &dest_prevobj_el));
                 WT_ERR(__wt_block_extlist_merge(session, block, &a->prevobj_discard[i], dest_prevobj_el));
             }
-        /* TODO: Continue */
 
         /*
          * If the "to" checkpoint is also being deleted, we're done with it, it's merged into some
@@ -780,6 +779,8 @@ __ckpt_process(WT_SESSION_IMPL *session, WT_BLOCK *block, WT_CKPT *ckptbase)
          */
         WT_ERR(__ckpt_extlist_fblocks(session, block, &b->alloc));
         WT_ERR(__ckpt_extlist_fblocks(session, block, &b->discard));
+        for (i = 0; i < b->prevobj_discard_size; i++)
+            WT_ERR(__ckpt_extlist_fblocks(session, block, &b->prevobj_discard[i]));
 
         F_SET(next_ckpt, WT_CKPT_UPDATE);
     }
