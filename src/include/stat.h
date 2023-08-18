@@ -351,6 +351,13 @@ struct __wt_connection_stats {
     int64_t lsm_work_queue_max;
     int64_t autocommit_readonly_retry;
     int64_t autocommit_update_retry;
+    int64_t background_compact_fail;
+    int64_t background_compact_fail_cache_pressure;
+    int64_t background_compact_interrupted;
+    int64_t background_compact_running;
+    int64_t background_compact_skipped;
+    int64_t background_compact_success;
+    int64_t background_compact_timeout;
     int64_t block_cache_blocks_update;
     int64_t block_cache_bytes_update;
     int64_t block_cache_blocks_evicted;
@@ -563,7 +570,9 @@ struct __wt_connection_stats {
     int64_t chunk_cache_retries;
     int64_t chunk_cache_toomany_retries;
     int64_t chunk_cache_bytes_inuse;
+    int64_t chunk_cache_bytes_inuse_pinned;
     int64_t chunk_cache_chunks_inuse;
+    int64_t chunk_cache_chunks_pinned;
     int64_t cond_auto_wait_reset;
     int64_t cond_auto_wait;
     int64_t cond_auto_wait_skipped;
@@ -855,6 +864,7 @@ struct __wt_connection_stats {
     int64_t txn_prepared_updates_committed;
     int64_t txn_prepared_updates_key_repeated;
     int64_t txn_prepared_updates_rolledback;
+    int64_t txn_read_race_prepare_commit;
     int64_t txn_checkpoint_snapshot_acquired;
     int64_t txn_read_overflow_remove;
     int64_t txn_rollback_oldest_pinned;
@@ -1175,7 +1185,6 @@ struct __wt_dsrc_stats {
     int64_t rec_overflow_key_leaf;
     int64_t rec_multiblock_max;
     int64_t rec_overflow_value;
-    int64_t rec_page_match;
     int64_t rec_pages;
     int64_t rec_pages_eviction;
     int64_t rec_page_delete;
@@ -1201,6 +1210,7 @@ struct __wt_dsrc_stats {
     int64_t rec_time_window_stop_ts;
     int64_t rec_time_window_stop_txn;
     int64_t session_compact;
+    int64_t txn_read_race_prepare_commit;
     int64_t txn_checkpoint_snapshot_acquired;
     int64_t txn_read_overflow_remove;
     int64_t txn_read_race_prepare_update;

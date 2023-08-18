@@ -253,7 +253,6 @@ static const char *const __stats_dsrc_desc[] = {
   "reconciliation: leaf-page overflow keys",
   "reconciliation: maximum blocks required for a page",
   "reconciliation: overflow values written",
-  "reconciliation: page checksum matches",
   "reconciliation: page reconciliation calls",
   "reconciliation: page reconciliation calls for eviction",
   "reconciliation: pages deleted",
@@ -279,6 +278,7 @@ static const char *const __stats_dsrc_desc[] = {
   "reconciliation: records written including a stop timestamp",
   "reconciliation: records written including a stop transaction ID",
   "session: object compaction",
+  "transaction: a reader raced with a prepared transaction commit and skipped an update or updates",
   "transaction: checkpoint has acquired a snapshot for its transaction",
   "transaction: number of times overflow removed value is read",
   "transaction: race to read prepared update retry",
@@ -580,7 +580,6 @@ __wt_stat_dsrc_clear_single(WT_DSRC_STATS *stats)
     stats->rec_overflow_key_leaf = 0;
     stats->rec_multiblock_max = 0;
     stats->rec_overflow_value = 0;
-    stats->rec_page_match = 0;
     stats->rec_pages = 0;
     stats->rec_pages_eviction = 0;
     stats->rec_page_delete = 0;
@@ -606,6 +605,7 @@ __wt_stat_dsrc_clear_single(WT_DSRC_STATS *stats)
     stats->rec_time_window_stop_ts = 0;
     stats->rec_time_window_stop_txn = 0;
     stats->session_compact = 0;
+    stats->txn_read_race_prepare_commit = 0;
     stats->txn_checkpoint_snapshot_acquired = 0;
     stats->txn_read_overflow_remove = 0;
     stats->txn_read_race_prepare_update = 0;
@@ -897,7 +897,6 @@ __wt_stat_dsrc_aggregate_single(WT_DSRC_STATS *from, WT_DSRC_STATS *to)
     if (from->rec_multiblock_max > to->rec_multiblock_max)
         to->rec_multiblock_max = from->rec_multiblock_max;
     to->rec_overflow_value += from->rec_overflow_value;
-    to->rec_page_match += from->rec_page_match;
     to->rec_pages += from->rec_pages;
     to->rec_pages_eviction += from->rec_pages_eviction;
     to->rec_page_delete += from->rec_page_delete;
@@ -923,6 +922,7 @@ __wt_stat_dsrc_aggregate_single(WT_DSRC_STATS *from, WT_DSRC_STATS *to)
     to->rec_time_window_stop_ts += from->rec_time_window_stop_ts;
     to->rec_time_window_stop_txn += from->rec_time_window_stop_txn;
     to->session_compact += from->session_compact;
+    to->txn_read_race_prepare_commit += from->txn_read_race_prepare_commit;
     to->txn_checkpoint_snapshot_acquired += from->txn_checkpoint_snapshot_acquired;
     to->txn_read_overflow_remove += from->txn_read_overflow_remove;
     to->txn_read_race_prepare_update += from->txn_read_race_prepare_update;
@@ -1220,7 +1220,6 @@ __wt_stat_dsrc_aggregate(WT_DSRC_STATS **from, WT_DSRC_STATS *to)
     if ((v = WT_STAT_READ(from, rec_multiblock_max)) > to->rec_multiblock_max)
         to->rec_multiblock_max = v;
     to->rec_overflow_value += WT_STAT_READ(from, rec_overflow_value);
-    to->rec_page_match += WT_STAT_READ(from, rec_page_match);
     to->rec_pages += WT_STAT_READ(from, rec_pages);
     to->rec_pages_eviction += WT_STAT_READ(from, rec_pages_eviction);
     to->rec_page_delete += WT_STAT_READ(from, rec_page_delete);
@@ -1250,6 +1249,7 @@ __wt_stat_dsrc_aggregate(WT_DSRC_STATS **from, WT_DSRC_STATS *to)
     to->rec_time_window_stop_ts += WT_STAT_READ(from, rec_time_window_stop_ts);
     to->rec_time_window_stop_txn += WT_STAT_READ(from, rec_time_window_stop_txn);
     to->session_compact += WT_STAT_READ(from, session_compact);
+    to->txn_read_race_prepare_commit += WT_STAT_READ(from, txn_read_race_prepare_commit);
     to->txn_checkpoint_snapshot_acquired += WT_STAT_READ(from, txn_checkpoint_snapshot_acquired);
     to->txn_read_overflow_remove += WT_STAT_READ(from, txn_read_overflow_remove);
     to->txn_read_race_prepare_update += WT_STAT_READ(from, txn_read_race_prepare_update);
@@ -1288,6 +1288,13 @@ static const char *const __stats_connection_desc[] = {
   "LSM: tree queue hit maximum",
   "autocommit: retries for readonly operations",
   "autocommit: retries for update operations",
+  "background-compact: background compact failed calls",
+  "background-compact: background compact failed calls due to cache pressure",
+  "background-compact: background compact interrupted",
+  "background-compact: background compact running",
+  "background-compact: background compact skipped as process would not reduce file size",
+  "background-compact: background compact successful calls",
+  "background-compact: background compact timeout",
   "block-cache: cached blocks updated",
   "block-cache: cached bytes updated",
   "block-cache: evicted blocks",
@@ -1518,7 +1525,9 @@ static const char *const __stats_connection_desc[] = {
   "chunk-cache: retried accessing a chunk while I/O was in progress",
   "chunk-cache: timed out due to too many retries",
   "chunk-cache: total bytes used by the cache",
+  "chunk-cache: total bytes used by the cache for pinned chunks",
   "chunk-cache: total chunks held by the chunk cache",
+  "chunk-cache: total pinned chunks held by the chunk cache",
   "connection: auto adjusting condition resets",
   "connection: auto adjusting condition wait calls",
   "connection: auto adjusting condition wait raced to update timeout and skipped updating",
@@ -1814,6 +1823,7 @@ static const char *const __stats_connection_desc[] = {
   "transaction: Number of prepared updates committed",
   "transaction: Number of prepared updates repeated on the same key",
   "transaction: Number of prepared updates rolled back",
+  "transaction: a reader raced with a prepared transaction commit and skipped an update or updates",
   "transaction: checkpoint has acquired a snapshot for its transaction",
   "transaction: number of times overflow removed value is read",
   "transaction: oldest pinned transaction ID rolled back for eviction",
@@ -1950,6 +1960,13 @@ __wt_stat_connection_clear_single(WT_CONNECTION_STATS *stats)
     stats->lsm_work_queue_max = 0;
     stats->autocommit_readonly_retry = 0;
     stats->autocommit_update_retry = 0;
+    stats->background_compact_fail = 0;
+    stats->background_compact_fail_cache_pressure = 0;
+    stats->background_compact_interrupted = 0;
+    stats->background_compact_running = 0;
+    stats->background_compact_skipped = 0;
+    stats->background_compact_success = 0;
+    stats->background_compact_timeout = 0;
     stats->block_cache_blocks_update = 0;
     stats->block_cache_bytes_update = 0;
     stats->block_cache_blocks_evicted = 0;
@@ -2162,7 +2179,9 @@ __wt_stat_connection_clear_single(WT_CONNECTION_STATS *stats)
     stats->chunk_cache_retries = 0;
     stats->chunk_cache_toomany_retries = 0;
     stats->chunk_cache_bytes_inuse = 0;
+    stats->chunk_cache_bytes_inuse_pinned = 0;
     stats->chunk_cache_chunks_inuse = 0;
+    stats->chunk_cache_chunks_pinned = 0;
     stats->cond_auto_wait_reset = 0;
     stats->cond_auto_wait = 0;
     stats->cond_auto_wait_skipped = 0;
@@ -2454,6 +2473,7 @@ __wt_stat_connection_clear_single(WT_CONNECTION_STATS *stats)
     stats->txn_prepared_updates_committed = 0;
     stats->txn_prepared_updates_key_repeated = 0;
     stats->txn_prepared_updates_rolledback = 0;
+    stats->txn_read_race_prepare_commit = 0;
     stats->txn_checkpoint_snapshot_acquired = 0;
     stats->txn_read_overflow_remove = 0;
     stats->txn_rollback_oldest_pinned = 0;
@@ -2560,6 +2580,14 @@ __wt_stat_connection_aggregate(WT_CONNECTION_STATS **from, WT_CONNECTION_STATS *
     to->lsm_work_queue_max += WT_STAT_READ(from, lsm_work_queue_max);
     to->autocommit_readonly_retry += WT_STAT_READ(from, autocommit_readonly_retry);
     to->autocommit_update_retry += WT_STAT_READ(from, autocommit_update_retry);
+    to->background_compact_fail += WT_STAT_READ(from, background_compact_fail);
+    to->background_compact_fail_cache_pressure +=
+      WT_STAT_READ(from, background_compact_fail_cache_pressure);
+    to->background_compact_interrupted += WT_STAT_READ(from, background_compact_interrupted);
+    to->background_compact_running += WT_STAT_READ(from, background_compact_running);
+    to->background_compact_skipped += WT_STAT_READ(from, background_compact_skipped);
+    to->background_compact_success += WT_STAT_READ(from, background_compact_success);
+    to->background_compact_timeout += WT_STAT_READ(from, background_compact_timeout);
     to->block_cache_blocks_update += WT_STAT_READ(from, block_cache_blocks_update);
     to->block_cache_bytes_update += WT_STAT_READ(from, block_cache_bytes_update);
     to->block_cache_blocks_evicted += WT_STAT_READ(from, block_cache_blocks_evicted);
@@ -2810,7 +2838,9 @@ __wt_stat_connection_aggregate(WT_CONNECTION_STATS **from, WT_CONNECTION_STATS *
     to->chunk_cache_retries += WT_STAT_READ(from, chunk_cache_retries);
     to->chunk_cache_toomany_retries += WT_STAT_READ(from, chunk_cache_toomany_retries);
     to->chunk_cache_bytes_inuse += WT_STAT_READ(from, chunk_cache_bytes_inuse);
+    to->chunk_cache_bytes_inuse_pinned += WT_STAT_READ(from, chunk_cache_bytes_inuse_pinned);
     to->chunk_cache_chunks_inuse += WT_STAT_READ(from, chunk_cache_chunks_inuse);
+    to->chunk_cache_chunks_pinned += WT_STAT_READ(from, chunk_cache_chunks_pinned);
     to->cond_auto_wait_reset += WT_STAT_READ(from, cond_auto_wait_reset);
     to->cond_auto_wait += WT_STAT_READ(from, cond_auto_wait);
     to->cond_auto_wait_skipped += WT_STAT_READ(from, cond_auto_wait_skipped);
@@ -3117,6 +3147,7 @@ __wt_stat_connection_aggregate(WT_CONNECTION_STATS **from, WT_CONNECTION_STATS *
     to->txn_prepared_updates_committed += WT_STAT_READ(from, txn_prepared_updates_committed);
     to->txn_prepared_updates_key_repeated += WT_STAT_READ(from, txn_prepared_updates_key_repeated);
     to->txn_prepared_updates_rolledback += WT_STAT_READ(from, txn_prepared_updates_rolledback);
+    to->txn_read_race_prepare_commit += WT_STAT_READ(from, txn_read_race_prepare_commit);
     to->txn_checkpoint_snapshot_acquired += WT_STAT_READ(from, txn_checkpoint_snapshot_acquired);
     to->txn_read_overflow_remove += WT_STAT_READ(from, txn_read_overflow_remove);
     to->txn_rollback_oldest_pinned += WT_STAT_READ(from, txn_rollback_oldest_pinned);

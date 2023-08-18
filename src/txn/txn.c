@@ -517,7 +517,7 @@ __txn_config_operation_timeout(WT_SESSION_IMPL *session, const char *cfg[], bool
     if (cfg == NULL)
         return (0);
 
-    /* Retrieve the maximum operation time, defaulting to the database-wide configuration. */
+    /* Retrieve the maximum operation time. */
     WT_RET(__wt_config_gets_def(session, cfg, "operation_timeout_ms", 0, &cval));
 
     /*
@@ -555,10 +555,9 @@ __wt_txn_config(WT_SESSION_IMPL *session, const char *cfg[])
 
     WT_ERR(__wt_config_gets_def(session, cfg, "isolation", 0, &cval));
     if (cval.len != 0)
-        txn->isolation = WT_STRING_MATCH("snapshot", cval.str, cval.len) ?
-          WT_ISO_SNAPSHOT :
-          WT_STRING_MATCH("read-committed", cval.str, cval.len) ? WT_ISO_READ_COMMITTED :
-                                                                  WT_ISO_READ_UNCOMMITTED;
+        txn->isolation = WT_STRING_MATCH("snapshot", cval.str, cval.len) ? WT_ISO_SNAPSHOT :
+          WT_STRING_MATCH("read-committed", cval.str, cval.len)          ? WT_ISO_READ_COMMITTED :
+                                                                           WT_ISO_READ_UNCOMMITTED;
 
     WT_ERR(__txn_config_operation_timeout(session, cfg, false));
 
@@ -640,7 +639,7 @@ __wt_txn_reconfigure(WT_SESSION_IMPL *session, const char *config)
     ret = __wt_config_getones(session, config, "isolation", &cval);
     if (ret == 0 && cval.len != 0) {
         session->isolation = txn->isolation = WT_STRING_MATCH("snapshot", cval.str, cval.len) ?
-          WT_ISO_SNAPSHOT :
+                                                                    WT_ISO_SNAPSHOT :
           WT_STRING_MATCH("read-uncommitted", cval.str, cval.len) ? WT_ISO_READ_UNCOMMITTED :
                                                                     WT_ISO_READ_COMMITTED;
     }
@@ -1128,7 +1127,11 @@ __txn_resolve_prepared_update_chain(WT_SESSION_IMPL *session, WT_UPDATE *upd, bo
     }
 
     /* Resolve the prepared update to be a committed update. */
-    __txn_resolve_prepared_update(session, upd);
+    __txn_apply_prepare_state_update(session, upd, true);
+
+    /* Sleep for 100ms in the prepared resolution path if configured. */
+    if (FLD_ISSET(S2C(session)->timing_stress_flags, WT_TIMING_STRESS_PREPARE_RESOLUTION_2))
+        __wt_sleep(0, 100000);
     WT_STAT_CONN_INCR(session, txn_prepared_updates_committed);
 }
 
@@ -1427,32 +1430,31 @@ __txn_resolve_prepared_op(WT_SESSION_IMPL *session, WT_TXN_OP *op, bool commit, 
         WT_ERR(__txn_fixup_hs_update(session, hs_cursor));
 
 prepare_verify:
-    if (EXTRA_DIAGNOSTICS_ENABLED(session, WT_DIAGNOSTIC_PREPARED)) {
+    /*
+     * If we are committing a prepared transaction we can check that we resolved the whole update
+     * chain. As long as we don't walk past a globally visible update we are guaranteed that the
+     * update chain won't be freed concurrently. In the commit case prepared updates cannot become
+     * globally visible before we finish resolving them, this is an implicit contract within
+     * WiredTiger.
+     *
+     * In the rollback case the updates are changed to aborted and in theory a newer update could be
+     * added to the chain concurrently and become globally visible. Thus our updates could be freed.
+     * We don't walk the chain in rollback for that reason.
+     */
+    if (EXTRA_DIAGNOSTICS_ENABLED(session, WT_DIAGNOSTIC_PREPARED) && commit) {
         for (; head_upd != NULL; head_upd = head_upd->next) {
             /*
-             * Assert if we still have an update from the current transaction that hasn't been
-             * resolved or aborted.
+             * Ignore aborted updates. We could have them in the middle of the relevant update
+             * chain, as a result of the cursor reserve API.
              */
-            WT_ASSERT_ALWAYS(session,
-              head_upd->txnid == WT_TXN_ABORTED || head_upd->prepare_state == WT_PREPARE_RESOLVED ||
-                head_upd->txnid != txn->id,
-              "Failed to resolve all updates associated with a prepared transaction");
-
             if (head_upd->txnid == WT_TXN_ABORTED)
                 continue;
-
-            /*
-             * If we restored an update from the history store, it should be the last update on the
-             * chain.
-             */
-            if (!commit && resolve_case == RESOLVE_PREPARE_ON_DISK &&
-              head_upd->type == WT_UPDATE_STANDARD && F_ISSET(head_upd, WT_UPDATE_RESTORED_FROM_HS))
-                WT_ASSERT_ALWAYS(session, head_upd->next == NULL,
-                  "Rolling back a prepared transaction resulted in an invalid update chain");
-
-            /* We have traversed all the non-obsolete updates. */
-            if (WT_UPDATE_DATA_VALUE(head_upd) && __wt_txn_upd_visible_all(session, head_upd))
+            /* Exit once we have visited all updates from the current transaction. */
+            if (head_upd->txnid != txn->id)
                 break;
+            /* Any update we find should be resolved. */
+            WT_ASSERT_ALWAYS(session, head_upd->prepare_state == WT_PREPARE_RESOLVED,
+              "A prepared update wasn't resolved when it should be");
         }
     }
 
@@ -1463,31 +1465,98 @@ err:
 }
 
 /*
+ * __txn_mod_sortable_key --
+ *     Given an operation return a boolean indicating if it has a sortable key.
+ */
+static inline bool
+__txn_mod_sortable_key(WT_SESSION_IMPL *session, WT_TXN_OP *opt)
+{
+    switch (opt->type) {
+    case (WT_TXN_OP_NONE):
+    case (WT_TXN_OP_REF_DELETE):
+    case (WT_TXN_OP_TRUNCATE_COL):
+    case (WT_TXN_OP_TRUNCATE_ROW):
+        return (false);
+    case (WT_TXN_OP_BASIC_COL):
+    case (WT_TXN_OP_BASIC_ROW):
+    case (WT_TXN_OP_INMEM_COL):
+    case (WT_TXN_OP_INMEM_ROW):
+        return (true);
+    }
+    WT_ASSERT_ALWAYS(session, false, "Unhandled op type encountered");
+    return (false);
+}
+
+/*
  * __txn_mod_compare --
- *     Qsort comparison routine for transaction modify list.
+ *     Qsort comparison routine for transaction modify list. Takes a session as a context argument.
+ *     This allows for the use of comparators.
  */
 static int WT_CDECL
-__txn_mod_compare(const void *a, const void *b)
+__txn_mod_compare(const void *a, const void *b, void *context)
 {
+    WT_SESSION_IMPL *session;
     WT_TXN_OP *aopt, *bopt;
+    int cmp;
+    bool a_has_sortable_key;
+    bool b_has_sortable_key;
 
     aopt = (WT_TXN_OP *)a;
     bopt = (WT_TXN_OP *)b;
-
-    /* If the files are different, order by ID. */
-    if (aopt->btree->id != bopt->btree->id)
-        return (aopt->btree->id < bopt->btree->id);
+    session = (WT_SESSION_IMPL *)context;
 
     /*
-     * If the files are the same, order by the key. Row-store collators require WT_SESSION pointers,
-     * and we don't have one. Compare the keys if there's no collator, otherwise return equality.
-     * Column-store is always easy.
+     * We want to sort on two things:
+     *  - B-tree ID
+     *  - Key
+     * However, there are a number of modification types that don't have a key to be sorted on. This
+     * requires us to add a stage between sorting on B-tree ID and key. At this intermediate stage,
+     * we sort on whether the modifications have a key.
+     *
+     * We need to uphold the contract that all modifications on the same key are contiguous in the
+     * final modification array. Technically they could be separated by non key modifications,
+     * but for simplicity's sake we sort them apart.
+     *
+     * Qsort comparators are expected to return -1 if the first argument is smaller than the second,
+     * 1 if the second argument is smaller than the first, and 0 if both arguments are equal.
      */
-    if (aopt->type == WT_TXN_OP_BASIC_ROW || aopt->type == WT_TXN_OP_INMEM_ROW)
-        return (aopt->btree->collator == NULL ?
-            __wt_lex_compare(&aopt->u.op_row.key, &bopt->u.op_row.key) :
-            0);
-    return (aopt->u.op_col.recno < bopt->u.op_col.recno);
+
+    /* Order by b-tree ID. */
+    if (aopt->btree->id < bopt->btree->id)
+        return (-1);
+    if (aopt->btree->id > bopt->btree->id)
+        return (1);
+
+    /*
+     * Order by whether the given operation has a key. We don't want to call key compare incorrectly
+     * especially given that u is a union which would create undefined behavior.
+     */
+    a_has_sortable_key = __txn_mod_sortable_key(session, aopt);
+    b_has_sortable_key = __txn_mod_sortable_key(session, bopt);
+    if (a_has_sortable_key && !b_has_sortable_key)
+        return (-1);
+    if (!a_has_sortable_key && b_has_sortable_key)
+        return (1);
+    /*
+     * In the case where both arguments don't have a key they are considered to be equal, we don't
+     * care exactly how they get sorted.
+     */
+    if (!a_has_sortable_key && !b_has_sortable_key)
+        return (0);
+
+    /* Finally, order by key. Row-store requires a call to __wt_compare. */
+    if (aopt->btree->type == BTREE_ROW) {
+        WT_ASSERT_ALWAYS(session,
+          __wt_compare(
+            session, aopt->btree->collator, &aopt->u.op_row.key, &bopt->u.op_row.key, &cmp) == 0,
+          "Failed to sort transaction modifications during prepare commit/rollback");
+        return (cmp);
+    }
+    if (aopt->u.op_col.recno < bopt->u.op_col.recno)
+        return (-1);
+    if (aopt->u.op_col.recno > bopt->u.op_col.recno)
+        return (1);
+    return (0);
 }
 
 /*
@@ -1497,6 +1566,7 @@ __txn_mod_compare(const void *a, const void *b)
 int
 __wt_txn_commit(WT_SESSION_IMPL *session, const char *cfg[])
 {
+    WT_CACHE *cache;
     WT_CONFIG_ITEM cval;
     WT_CONNECTION_IMPL *conn;
     WT_CURSOR *cursor;
@@ -1514,6 +1584,7 @@ __wt_txn_commit(WT_SESSION_IMPL *session, const char *cfg[])
     bool cannot_fail, locked, prepare, readonly, update_durable_ts;
 
     conn = S2C(session);
+    cache = conn->cache;
     cursor = NULL;
     txn = session->txn;
     txn_global = &conn->txn_global;
@@ -1575,7 +1646,8 @@ __wt_txn_commit(WT_SESSION_IMPL *session, const char *cfg[])
      * page within each file are done at the same time.
      */
     if (prepare)
-        __wt_qsort(txn->mod, txn->mod_count, sizeof(WT_TXN_OP), __txn_mod_compare);
+        __wt_qsort_r(
+          txn->mod, txn->mod_count, sizeof(WT_TXN_OP), __txn_mod_compare, (void *)session);
 
     /* If we are logging, write a commit log record. */
     if (txn->logrec != NULL) {
@@ -1651,7 +1723,7 @@ __wt_txn_commit(WT_SESSION_IMPL *session, const char *cfg[])
                  * transaction timestamp. Those records should already have the original time window
                  * when they are inserted into the history store.
                  */
-                if (conn->cache->hs_fileid != 0 && op->btree->id == conn->cache->hs_fileid)
+                if (cache->hs_fileid != 0 && op->btree->id == cache->hs_fileid)
                     break;
 
                 __wt_txn_op_set_timestamp(session, op);
@@ -1672,7 +1744,7 @@ __wt_txn_commit(WT_SESSION_IMPL *session, const char *cfg[])
                  * the total mod_count.
                  */
                 if ((i * 36) % txn->mod_count == 0)
-                    __wt_timing_stress(session, WT_TIMING_STRESS_PREPARE_RESOLUTION, NULL);
+                    __wt_timing_stress(session, WT_TIMING_STRESS_PREPARE_RESOLUTION_1);
 
 #ifdef HAVE_DIAGNOSTIC
                 ++prepare_count;
@@ -1915,17 +1987,7 @@ __wt_txn_prepare(WT_SESSION_IMPL *session, const char *cfg[])
 
             ++prepared_updates;
 
-            /* Set prepare timestamp. */
-            upd->start_ts = txn->prepare_timestamp;
-
-            /*
-             * By default durable timestamp is assigned with 0 which is same as WT_TS_NONE. Assign
-             * it with WT_TS_NONE to make sure in case if we change the macro value it shouldn't be
-             * a problem.
-             */
-            upd->durable_ts = WT_TS_NONE;
-
-            WT_PUBLISH(upd->prepare_state, WT_PREPARE_INPROGRESS);
+            __txn_apply_prepare_state_update(session, upd, false);
             op->u.op_upd = NULL;
 
             /*
@@ -2011,7 +2073,8 @@ __wt_txn_rollback(WT_SESSION_IMPL *session, const char *cfg[])
      * page within each file are done at the same time.
      */
     if (prepare)
-        __wt_qsort(txn->mod, txn->mod_count, sizeof(WT_TXN_OP), __txn_mod_compare);
+        __wt_qsort_r(
+          txn->mod, txn->mod_count, sizeof(WT_TXN_OP), __txn_mod_compare, (void *)session);
 
     /* Rollback and free updates. */
     for (i = 0, op = txn->mod; i < txn->mod_count; i++, op++) {

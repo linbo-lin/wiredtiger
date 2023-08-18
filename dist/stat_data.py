@@ -35,6 +35,12 @@ class AutoCommitStat(Stat):
     prefix = 'autocommit'
     def __init__(self, name, desc, flags=''):
         Stat.__init__(self, name, AutoCommitStat.prefix, desc, flags)
+
+class BackgroundCompactStat(Stat):
+    prefix = 'background-compact'
+    def __init__(self, name, desc, flags=''):
+        Stat.__init__(self, name, BackgroundCompactStat.prefix, desc, flags)
+
 class BlockCacheStat(Stat):
     prefix = 'block-cache'
     def __init__(self, name, desc, flags=''):
@@ -189,6 +195,17 @@ conn_stats = [
     ConnStat('rwlock_write', 'pthread mutex shared lock write-lock calls'),
     ConnStat('time_travel', 'detected system time went backwards'),
     ConnStat('write_io', 'total write I/Os'),
+    
+    ##########################################
+    # Background compaction statistics
+    ##########################################
+    BackgroundCompactStat('background_compact_fail', 'background compact failed calls', 'no_scale'),
+    BackgroundCompactStat('background_compact_fail_cache_pressure', 'background compact failed calls due to cache pressure', 'no_scale'),
+    BackgroundCompactStat('background_compact_interrupted', 'background compact interrupted', 'no_scale'),
+    BackgroundCompactStat('background_compact_running', 'background compact running', 'no_scale'),
+    BackgroundCompactStat('background_compact_skipped', 'background compact skipped as process would not reduce file size', 'no_scale'),
+    BackgroundCompactStat('background_compact_success', 'background compact successful calls', 'no_scale'),
+    BackgroundCompactStat('background_compact_timeout', 'background compact timeout', 'no_scale'),
 
     ##########################################
     # Block cache statistics
@@ -339,8 +356,10 @@ conn_stats = [
     # Chunk cache statistics
     ##########################################
     ChunkCacheStat('chunk_cache_bytes_inuse', 'total bytes used by the cache'),
-    ChunkCacheStat('chunk_cache_chunks_inuse', 'total chunks held by the chunk cache'),
+    ChunkCacheStat('chunk_cache_bytes_inuse_pinned', 'total bytes used by the cache for pinned chunks'),
     ChunkCacheStat('chunk_cache_chunks_evicted', 'chunks evicted'),
+    ChunkCacheStat('chunk_cache_chunks_inuse', 'total chunks held by the chunk cache'),
+    ChunkCacheStat('chunk_cache_chunks_pinned', 'total pinned chunks held by the chunk cache'),
     ChunkCacheStat('chunk_cache_exceeded_capacity', 'could not allocate due to exceeding capacity'),
     ChunkCacheStat('chunk_cache_io_failed', 'number of times a read from storage failed'),
     ChunkCacheStat('chunk_cache_lookups', 'lookups'),
@@ -819,7 +838,6 @@ dsrc_stats = [
     RecStat('rec_multiblock_max', 'maximum blocks required for a page', 'max_aggregate,no_scale'),
     RecStat('rec_overflow_key_leaf', 'leaf-page overflow keys'),
     RecStat('rec_overflow_value', 'overflow values written'),
-    RecStat('rec_page_match', 'page checksum matches'),
     RecStat('rec_prefix_compression', 'leaf page key bytes discarded using prefix compression', 'size'),
     RecStat('rec_suffix_compression', 'internal page key bytes discarded using suffix compression', 'size'),
     RecStat('rec_time_window_pages_prepared', 'pages written including at least one prepare'),
@@ -1018,6 +1036,7 @@ conn_dsrc_stats = [
     TxnStat('txn_checkpoint_snapshot_acquired', 'checkpoint has acquired a snapshot for its transaction'),
     TxnStat('txn_read_overflow_remove', 'number of times overflow removed value is read'),
     TxnStat('txn_read_race_prepare_update', 'race to read prepared update retry'),
+    TxnStat('txn_read_race_prepare_commit', 'a reader raced with a prepared transaction commit and skipped an update or updates'),
     TxnStat('txn_rts_delete_rle_skipped', 'rollback to stable skipping delete rle'),
     TxnStat('txn_rts_hs_removed', 'rollback to stable updates removed from history store'),
     TxnStat('txn_rts_hs_removed_dryrun', 'rollback to stable updates that would have been removed from history store in non-dryrun mode'),

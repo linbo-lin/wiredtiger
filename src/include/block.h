@@ -254,7 +254,6 @@ struct __wt_block {
 
     TAILQ_ENTRY(__wt_block) q;     /* Linked list of handles */
     TAILQ_ENTRY(__wt_block) hashq; /* Hashed list of handles */
-    bool linked;
 
     WT_FH *fh;            /* Backing file handle */
     wt_off_t size;        /* File size */
@@ -263,6 +262,7 @@ struct __wt_block {
 
     bool created_during_backup; /* Created during incremental backup */
     bool sync_on_checkpoint;    /* fsync the handle after the next checkpoint */
+    bool readonly;              /* Underlying file was opened only for reading */
 
     /* Configuration information, set when the file is opened. */
     uint32_t allocfirst; /* Allocation is first-fit */
