@@ -30,6 +30,19 @@ struct __wt_hazard {
 #endif
 };
 
+/*
+ * WT_HAZARD_ARRAY --
+ *   An array of all hazard pointers held by a session.
+ */
+struct __wt_hazard_array {
+/* The hazard pointer array grows as necessary, initialize with 250 slots. */
+#define WT_SESSION_INITIAL_HAZARD_SLOTS 250
+    uint32_t size;   /* Allocated size of the Hazard pointer array */
+    uint32_t inuse;  /* Number of Hazard pointer array slots potentially in-use */
+    uint32_t active; /* Number of Hazard pointer array slots actively in-use */
+    WT_HAZARD *arr;  /* Hazard pointer array */
+};
+
 /* Get the connection implementation for a session */
 #define S2C(session) ((WT_CONNECTION_IMPL *)((WT_SESSION_IMPL *)(session))->iface.connection)
 
@@ -325,16 +338,9 @@ struct __wt_session_impl {
  * Use the non-NULL state of the hazard field to know if the session has previously been
  * initialized.
  */
-#define WT_SESSION_FIRST_USE(s) ((s)->hazard == NULL)
+#define WT_SESSION_FIRST_USE(s) ((s)->hazards.arr == NULL)
 
-/*
- * The hazard pointer array grows as necessary, initialize with 250 slots.
- */
-#define WT_SESSION_INITIAL_HAZARD_SLOTS 250
-    uint32_t hazard_size;  /* Allocated size of the Hazard pointer array */
-    uint32_t hazard_inuse; /* Number of Hazard pointer array slots potentially in-use */
-    uint32_t nhazard;      /* Number of Hazard pointer array slots actively in-use */
-    WT_HAZARD *hazard;     /* Hazard pointer array */
+    WT_HAZARD_ARRAY hazards;
 
     /*
      * Operation tracking.
