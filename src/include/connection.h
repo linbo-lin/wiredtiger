@@ -366,9 +366,11 @@ struct __wt_connection_impl {
      * that way because we want an easy way for the server thread code to avoid walking the entire
      * array when only a few threads are running.
      */
+    /* @shared_var_list_begin - session array. */
     WT_SESSION_IMPL *sessions; /* Session reference */
     uint32_t session_size;     /* Session array size */
     uint32_t session_cnt;      /* Session count */
+    /* @shared_var_list_end - session array. */
 
     size_t session_scratch_max; /* Max scratch memory per session */
 
