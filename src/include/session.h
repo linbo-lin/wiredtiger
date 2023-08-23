@@ -331,13 +331,13 @@ struct __wt_session_impl {
  * The hazard pointer array grows as necessary, initialize with 250 slots.
  */
 #define WT_SESSION_INITIAL_HAZARD_SLOTS 250
-    /* @Shared - hazard pointers. */
+    /* @shared_var - hazard pointers. */
     uint32_t hazard_size;  /* Allocated size of the Hazard pointer array */
-    /* @Shared - hazard pointers. */
+    /* @shared_var - hazard pointers. */
     uint32_t hazard_inuse; /* Number of hazard pointer array slots potentially in-use */
-    /* @Shared - hazard pointers. */
+    /* @shared_var - hazard pointers. */
     uint32_t nhazard;      /* Number of hazard pointer array slots actively in-use */
-    /* @Shared - hazard pointers. */
+    /* @shared_var - hazard pointers. */
     WT_HAZARD *hazard;     /* Hazard pointer array */
 
     /*
