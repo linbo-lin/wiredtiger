@@ -883,6 +883,7 @@ __ckpt_update(
     WT_DECL_ITEM(a);
     WT_DECL_RET;
     uint8_t *endp;
+    uint i;
     bool is_live;
 
     is_live = F_ISSET(ckpt, WT_CKPT_ADD);
@@ -896,11 +897,14 @@ __ckpt_update(
     WT_RET(__wt_block_extlist_check(session, &ci->alloc, &ci->discard));
 #endif
     /*
-     * Write the checkpoint's alloc and discard extent lists. Note these blocks never appear on the
-     * system's allocation list, checkpoint extent blocks don't appear on any extent lists.
+     * Write the checkpoint's alloc and discard extent lists, and the previous objects' discard lists.
+     * Note these blocks never appear on the system's allocation list; checkpoint extent blocks don't appear on any extent lists.
      */
     WT_RET(__wt_block_extlist_write(session, block, &ci->alloc, NULL));
     WT_RET(__wt_block_extlist_write(session, block, &ci->discard, NULL));
+
+    for (i = 0; i < ci->ckpt_prevobj_discard_size; i++)
+        WT_RET(__wt_block_extlist_write(session, block, &ci->ckpt_prevobj_discard[i], NULL));
 
     /*
      * If this is the final block, we append an incomplete copy of the checkpoint information to the
