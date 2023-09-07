@@ -1,0 +1,605 @@
+
+
+
+
+
+{ "lsn" : [2,58045952],
+"hdr_flags" : "",
+"rec_len" : 128,
+"mem_len" : 128,
+"type" : "commit",
+"txnid" : 327339,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 6 0x6,
+    "key": "0000377031.00/opqrstuv",
+    "value": "000037703"
+  }
+]
+},
+
+
+{ "lsn" : [2,187074816],
+"hdr_flags" : "compressed",
+"rec_len" : 256,
+"mem_len" : 727,
+"type" : "commit",
+"txnid" : 1055576,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "ECCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000000008.00/defghijklmnopqrstuvwxyzabcdefg",
+    "value": "0000000008"
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000000008.00/opqrstuvwxy",
+    "value": "0000000008"
+  },
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000000008.00/opqrstuvwxyzabcde",
+    "value": "0000000008"
+  },
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000000008.00/opqrstuvwxyzabcdefghijklmnopqr",
+    "value": "0000000008"
+  },
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "HCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000000126.00/defghijklmnopqrstuvwxyzabc",
+    "value": ""
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000000126.00/opqrstuvwxy",
+    "value": ""
+  },
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000000126.00/opqrst",
+    "value": ""
+  },
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000000126.00/opqrstuvwxyzabcdefghijklmnop",
+    "value": ""
+  },
+  { "optype": "row_remove",
+    "fileid": 6 0x6,
+    "key": "0000320658.00/opqrstuvwxyza"
+  },
+  { "optype": "row_put",
+    "fileid": 6 0x6,
+    "key": "0001614279.10/opqrstuvwxyzab",
+    "value": "0001614279/vMNOPQ"
+  },
+  { "optype": "row_remove",
+    "fileid": 2 0x2,
+    "key": "0000377031.00/opqrstuvwxy"
+  },
+  { "optype": "row_remove",
+    "fileid": 3 0x3,
+    "key": "0000377031.00/opqrstuvwxyzabcdef"
+  },
+  { "optype": "row_remove",
+    "fileid": 4 0x4,
+    "key": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000377031.00/defghijklmnopqrstuvwxyzabcd"
+  },
+  { "optype": "row_remove",
+    "fileid": 5 0x5,
+    "key": "0000377031.00/opqrstuvwxyzabcdefghijklmnopqrst"
+  }
+]
+},
+
+
+{ "lsn" : [2,268526208],
+"hdr_flags" : "compressed",
+"rec_len" : 256,
+"mem_len" : 574,
+"type" : "commit",
+"txnid" : 1515966,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000377031.00/opqrstuvwxyzabcdefghijklmnopqrst",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000377031.00/opqrstuvwxy",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000377031.00/opqrstuvwxyzabcdef",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000377031.00/defghijklmnopqrstuvwxyzabcd",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "ICCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000000130.00/defghijklmnopqrstuvwxyzabcdef",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000000130.00/opqrstuvwxy",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000000130.00/opqrstuvwxyzabcdef",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000000130.00/opqrstuvwxyzabcdefgh",
+    "value": "0000000130/hMNOPQRSTUVW"
+  }
+]
+},
+
+
+{ "lsn" : [3,109681152],
+"hdr_flags" : "",
+"rec_len" : 128,
+"mem_len" : 128,
+"type" : "commit",
+"txnid" : 2414377,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 6 0x6,
+    "key": "0000377031.00/opqrstuv",
+    "value": "000037703"
+  }
+]
+},
+
+
+{ "lsn" : [3,266850304],
+"hdr_flags" : "compressed",
+"rec_len" : 256,
+"mem_len" : 481,
+"type" : "commit",
+"txnid" : 3312206,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000377031.00/opqrstuvwxyzabcdef",
+    "value": "0000377031/oMNOPQRSTUV"
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000377031.00/opqrstuvwxy",
+    "value": "0000377031/oMNOPQRSTUV"
+  },
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000377031.00/defghijklmnopqrstuvwxyzabcd",
+    "value": "0000377031/oMNOPQRSTUV"
+  },
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000377031.00/opqrstuvwxyzabcdefghijklmnopqrst",
+    "value": "0000377031/oMNOPQRSTUV"
+  },
+  { "optype": "row_remove",
+    "fileid": 3 0x3,
+    "key": "0000411750.00/op"
+  },
+  { "optype": "row_remove",
+    "fileid": 2 0x2,
+    "key": "0000411750.00/opqrstuvwxy"
+  },
+  { "optype": "row_remove",
+    "fileid": 4 0x4,
+    "key": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000411750.00/defghijklmnopqrstuvwxyzabcd"
+  },
+  { "optype": "row_remove",
+    "fileid": 5 0x5,
+    "key": "0000411750.00/opqrstuvwxyzabcdef"
+  }
+]
+},
+
+{ "lsn" : [3,284264832],
+"hdr_flags" : "compressed",
+"rec_len" : 384,
+"mem_len" : 838,
+"type" : "commit",
+"txnid" : 3411446,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0001352451.00/opqrstuvwxyzabcdefghijklmnopqrst",
+    "value": "000135"
+  },
+{ "optype": "row_put",
+"fileid": 2 0x2,
+"key": "0001352451.00/opqrstuvwxy",
+"value": "000135"
+},
+{ "optype": "row_put",
+"fileid": 3 0x3,
+"key": "0001352451.00/opqrstuvwxyz",
+"value": "000135"
+},
+{ "optype": "row_put",
+"fileid": 4 0x4,
+"key": "VCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0001352451.00/defghijklmnopqrstuvwxyzabcd",
+"value": "000135"
+},
+{ "optype": "row_put",
+"fileid": 4 0x4,
+"key": "HCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000000114.00/defghijklmnopqrstuv",
+"value": "0000"
+},
+{ "optype": "row_put",
+"fileid": 2 0x2,
+"key": "0000000114.00/opqrstuvwxy",
+"value": "0000"
+},
+{ "optype": "row_put",
+"fileid": 3 0x3,
+"key": "0000000114.00/opqrstuvwx",
+"value": "0000"
+},
+{ "optype": "row_put",
+"fileid": 5 0x5,
+"key": "0000000114.00/opqrstuvwxyzabcdefghijklmnop",
+"value": "0000"
+},
+{ "optype": "row_remove",
+"fileid": 2 0x2,
+"key": "0000377031.00/opqrstuvwxy"
+},
+{ "optype": "row_remove",
+"fileid": 3 0x3,
+"key": "0000377031.00/opqrstuvwxyzabcdef"
+},
+{ "optype": "row_remove",
+"fileid": 4 0x4,
+"key": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000377031.00/defghijklmnopqrstuvwxyzabcd"
+},
+{ "optype": "row_remove",
+"fileid": 5 0x5,
+"key": "0000377031.00/opqrstuvwxyzabcdefghijklmnopqrst"
+},
+{ "optype": "row_remove",
+"fileid": 3 0x3,
+"key": "0000929093.00/opqrstuvwxyzabcdefghij"
+},
+{ "optype": "row_remove",
+"fileid": 2 0x2,
+"key": "0000929093.00/opqrstuvwxy"
+},
+{ "optype": "row_remove",
+"fileid": 4 0x4,
+"key": "UCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000929093.00/defghijklmnopqrstuvwxyzabcdef"
+},
+{ "optype": "row_remove",
+"fileid": 5 0x5,
+"key": "0000929093.00/opqrstuvwxyzabcdefghijklmno"
+}
+]
+},
+
+
+{ "lsn" : [3,305711616],
+"hdr_flags" : "compressed",
+"rec_len" : 256,
+"mem_len" : 574,
+"type" : "commit",
+"txnid" : 3533058,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000377031.00/opqrstuvwxyzabcdefghijklmnopqrst",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000377031.00/opqrstuvwxy",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000377031.00/opqrstuvwxyzabcdef",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000377031.00/defghijklmnopqrstuvwxyzabcd",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "ICCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000000130.00/defghijklmnopqrstuvwxyzabcdef",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000000130.00/opqrstuvwxy",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000000130.00/opqrstuvwxyzabcdef",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000000130.00/opqrstuvwxyzabcdefgh",
+    "value": "0000000130/hMNOPQRSTUVW"
+  }
+]
+},
+
+
+
+{ "lsn" : [3,305711616],
+"hdr_flags" : "compressed",
+"rec_len" : 256,
+"mem_len" : 574,
+"type" : "commit",
+"txnid" : 3533058,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000377031.00/opqrstuvwxyzabcdefghijklmnopqrst",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000377031.00/opqrstuvwxy",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000377031.00/opqrstuvwxyzabcdef",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000377031.00/defghijklmnopqrstuvwxyzabcd",
+    "value": "0000377031/RMNOP"
+  },
+  { "optype": "row_put",
+    "fileid": 4 0x4,
+    "key": "ICCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000000130.00/defghijklmnopqrstuvwxyzabcdef",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 2 0x2,
+    "key": "0000000130.00/opqrstuvwxy",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 3 0x3,
+    "key": "0000000130.00/opqrstuvwxyzabcdef",
+    "value": "0000000130/hMNOPQRSTUVW"
+  },
+  { "optype": "row_put",
+    "fileid": 5 0x5,
+    "key": "0000000130.00/opqrstuvwxyzabcdefgh",
+    "value": "0000000130/hMNOPQRSTUVW"
+  }
+]
+},
+
+// Truncate all keys around 0377031
+{ "lsn" : [3,305949312],
+    "hdr_flags" : "compressed",
+    "rec_len" : 384,
+    "mem_len" : 969,
+    "type" : "commit",
+    "txnid" : 3533526,
+    "ops": [
+      { "optype": "row_truncate",
+        "fileid": 3 0x3,
+        "start": "0000355758.00/opqrstuvwxyza",
+        "stop": "0000387214.00/opqrstuv",
+        "mode": 1
+      },
+      { "optype": "row_truncate",
+        "fileid": 2 0x2,
+        "start": "0000355758.00/opqrstuvwxy",
+        "stop": "0000387214.00/opqrstuvwxy",
+        "mode": 1
+      },
+      { "optype": "row_truncate",
+        "fileid": 4 0x4,
+        "start": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000355758.00/defghijklmnopqrstuvwxyzabcde",
+        "stop":  "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000387214.00/defghijklmnopqrstuvwxy",
+        "mode": 1
+      },
+      { "optype": "row_truncate",
+        "fileid": 5 0x5,
+        "start": "0000355758.00/opqrstuvwxyzabcdefghijklmn",
+        "stop": "0000387214.00/opqrstuvwxyzabcdefg",
+        "mode": 1
+      },
+
+      // This truncate doesn't touch 0377031, but it's directly adjacent. 
+      // Mentioning it in case there's any off-by-one-errors taking place.
+      { "lsn" : [4,84925824],
+      "hdr_flags" : "compressed",
+      "rec_len" : 256,
+      "mem_len" : 381,
+      "type" : "commit",
+      "txnid" : 4081120,
+      "ops": [
+        { "optype": "row_truncate",
+          "fileid": 2 0x2,
+          "start": "0000373837.00/opqrstuvwxy",
+          "stop": "0000377030.00/opqrstuvwxy",
+          "mode": 1
+        },
+        { "optype": "row_truncate",
+          "fileid": 3 0x3,
+          "start": "0000373837.00/opqrstuvwxyzabcdef",
+          "stop": "0000377030.00/opqrstuvwxy",
+          "mode": 1
+        },
+        { "optype": "row_truncate",
+          "fileid": 4 0x4,
+          "start": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000373837.00/defghijklmnopqrstuvwxyzab",
+          "stop": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000377030.00/defghijklmnopqr",
+          "mode": 1
+        },
+        { "optype": "row_truncate",
+          "fileid": 5 0x5,
+          "start": "0000373837.00/opqrstuvwxyzabcdefgh",
+          "stop": "0000377030.00/opqrstuvwxyzabcdefghijklmno",
+          "mode": 1
+        }
+      ]
+    },      
+
+// Checkpoint
+{ "lsn" : [4,117709056],
+  "hdr_flags" : "",
+  "rec_len" : 128,
+  "mem_len" : 128,
+  "type" : "checkpoint",
+  "ckpt_lsn" : [4,75922816]
+},
+
+
+
+
+{ "lsn" : [4,118664192],
+"hdr_flags" : "",
+"rec_len" : 128,
+"mem_len" : 128,
+"type" : "commit",
+"txnid" : 4275441,
+"ops": [
+  { "optype": "row_put",
+    "fileid": 6 0x6,
+    "key": "0000377031.00/opqrstuv",
+    "value": "000037703"
+  }
+]
+},
+
+
+{ "lsn" : [4,291784192],
+  "hdr_flags" : "compressed",
+  "rec_len" : 256,
+  "mem_len" : 553,
+  "type" : "commit",
+  "txnid" : 5267475,
+  "ops": [
+    { "optype": "row_put",
+      "fileid": 5 0x5,
+      "key": "0001352451.00/opqrstuvwxyzabcdefghijklmnopqrst",
+      "value": "000135"
+    },
+    { "optype": "row_put",
+      "fileid": 2 0x2,
+      "key": "0001352451.00/opqrstuvwxy",
+      "value": "000135"
+    },
+    { "optype": "row_put",
+      "fileid": 3 0x3,
+      "key": "0001352451.00/opqrstuvwxyz",
+      "value": "000135"
+    },
+    { "optype": "row_put",
+      "fileid": 4 0x4,
+      "key": "VCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0001352451.00/defghijklmnopqrstuvwxyzabcd",
+      "value": "000135"
+    },
+    { "optype": "row_put",
+      "fileid": 4 0x4,
+      "key": "HCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000000114.00/defghijklmnopqrstuv",
+      "value": "0000"
+    },
+    { "optype": "row_put",
+      "fileid": 2 0x2,
+      "key": "0000000114.00/opqrstuvwxy",
+      "value": "0000"
+    },
+    { "optype": "row_put",
+      "fileid": 3 0x3,
+      "key": "0000000114.00/opqrstuvwx",
+      "value": "0000"
+    },
+    { "optype": "row_put",
+      "fileid": 5 0x5,
+      "key": "0000000114.00/opqrstuvwxyzabcdefghijklmnop",
+      "value": "0000"
+    },
+    { "optype": "row_remove",
+      "fileid": 2 0x2,
+      "key": "0000377031.00/opqrstuvwxy"
+    },
+    { "optype": "row_remove",
+      "fileid": 3 0x3,
+      "key": "0000377031.00/opqrstuvwxyzabcdef"
+    },
+    { "optype": "row_remove",
+      "fileid": 5 0x5,
+      "key": "0000377031.00/opqrstuvwxyzabcdefghijklmnopqrst"
+    }
+  ]
+},
+
+
+
+{ "lsn" : [4,309100544],
+    "hdr_flags" : "compressed",
+    "rec_len" : 256,
+    "mem_len" : 574,
+    "type" : "commit",
+    "txnid" : 5366364,
+    "ops": [
+      { "optype": "row_put",
+        "fileid": 5 0x5,
+        "key": "0000377031.00/opqrstuvwxyzabcdefghijklmnopqrst",
+        "value": "0000377031/RMNOP"
+      },
+      { "optype": "row_put",
+        "fileid": 2 0x2,
+        "key": "0000377031.00/opqrstuvwxy",
+        "value": "0000377031/RMNOP"
+      },
+      { "optype": "row_put",
+        "fileid": 3 0x3,
+        "key": "0000377031.00/opqrstuvwxyzabcdef",
+        "value": "0000377031/RMNOP"
+      },
+      { "optype": "row_put",
+        "fileid": 4 0x4,
+        "key": "TCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000377031.00/defghijklmnopqrstuvwxyzabcd",
+        "value": "0000377031/RMNOP"
+      },
+      { "optype": "row_put",
+        "fileid": 4 0x4,
+        "key": "ICCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC0000000130.00/defghijklmnopqrstuvwxyzabcdef",
+        "value": "0000000130/hMNOPQRSTUVW"
+      },
+      { "optype": "row_put",
+        "fileid": 2 0x2,
+        "key": "0000000130.00/opqrstuvwxy",
+        "value": "0000000130/hMNOPQRSTUVW"
+      },
+      { "optype": "row_put",
+        "fileid": 3 0x3,
+        "key": "0000000130.00/opqrstuvwxyzabcdef",
+        "value": "0000000130/hMNOPQRSTUVW"
+      },
+      { "optype": "row_put",
+        "fileid": 5 0x5,
+        "key": "0000000130.00/opqrstuvwxyzabcdefgh",
+        "value": "0000000130/hMNOPQRSTUVW"
+      }
+    ]
+  },

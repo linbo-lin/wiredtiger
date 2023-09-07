@@ -407,9 +407,10 @@ typedef union __wt_rand_state WT_RAND_STATE;
 typedef uint64_t wt_timestamp_t;
 
 // This macro doesn't do anything. We only use it to highlight to readers that the variable is a shared var.
-// e.g. WT_SHARED uint32_t foo;
+// e.g. _Shared uint32_t foo;
 // WT-11549 - Move this elsewhere. s_all will overwrite it.
-#define WT_SHARED 
+// This example uses _Shared instead of WT_SHARED. To see WT_SHARED look at the previous commit
+#define _Shared 
 
 /*
  * Forward type declarations for internal types: END
